@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Dispositivos</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 2em;
+            background-color: #f4f4f9;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .dispositivo-lista {
+            list-style: none;
+            padding: 0;
+        }
+        .dispositivo-item {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            padding: 15px;
+        }
+        .estado-correcto {
+            color: green;
+            font-weight: bold;
+        }
+        .estado-exceso {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Panel de Monitoreo de Dispositivos</h1>
+
+    <h2>Consumo máximo permitido: 100 W</h2>
+
+    <ul class="dispositivo-lista">
+        {% for d in dispositivos %}
+            <li class="dispositivo-item">
+                <strong>{{ d.nombre }}</strong>
+                <ul>
+                    <li>Consumo: {{ d.consumo }} W</li>
+                    {% if d.consumo > 100 %}
+                        <li class="estado-exceso">Estado: Exceso</li>
+                    {% else %}
+                        <li class="estado-correcto">Estado: Correcto</li>
+                    {% endif %}
+                </ul>
+            </li>
+        {% endfor %}
+    </ul>
+
+</body>
+</html>
