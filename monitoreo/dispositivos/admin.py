@@ -18,9 +18,9 @@ class ZoneAdmin(admin.ModelAdmin):
 # Registro del modelo: Dispositivo
 @admin.register(Device)
 class DeviceAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'consumo_maximo', 'activo', 'categoria', 'estado', 'creado')
+    list_display = ('nombre', 'consumo_maximo', 'categoria', 'estado', 'creado')
     search_fields = ('nombre',)
-    list_filter = ('categoria', 'activo', 'estado')
+    list_filter = ('categoria', 'estado')
 
 # Registro del modelo: Medición
 @admin.register(Measurement)

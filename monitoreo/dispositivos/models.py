@@ -36,7 +36,7 @@ class Zone(BaseModel):
 class Device(BaseModel):
     nombre = models.CharField(max_length=100)
     consumo_maximo = models.IntegerField()  # Consumo en watts
-    activo = models.BooleanField(default=True)
+    zona = models.ForeignKey(Zone, on_delete=models.CASCADE)
     categoria = models.ForeignKey(Category, on_delete=models.CASCADE)
 
     def __str__(self):
