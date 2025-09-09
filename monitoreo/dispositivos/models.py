@@ -16,50 +16,56 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True  # Este modelo no crea tabla, solo se hereda
 
-class Category(BaseModel): #categoria
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True, null=True)
+# Modelo: Categoría
+class Category(BaseModel):
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return self.name
+        return self.nombre
 
-class Zone(BaseModel): #zona
-    name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(blank=True, null=True, help_text="Zone description.")
-
-    def __str__(self):
-        return self.name
-
-class Device(BaseModel): #Dispositivo
-    name = models.CharField(max_length=100)
-    power_consumption = models.IntegerField()
-    is_active = models.BooleanField(default=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+# Modelo: Zona
+class Zone(BaseModel):
+    nombre = models.CharField(max_length=100, unique=True)
+    descripcion = models.TextField(blank=True, null=True, help_text="Descripción de la zona.")
 
     def __str__(self):
-        return self.name
+        return self.nombre
 
-class Measurement(BaseModel): #Medicion
-    device = models.ForeignKey(Device, on_delete=models.CASCADE)
-    consumption_w = models.FloatField()
+# Modelo: Dispositivo
+class Device(BaseModel):
+    nombre = models.CharField(max_length=100)
+    consumo_maximo = models.IntegerField()  # Consumo en watts
+    activo = models.BooleanField(default=True)
+    categoria = models.ForeignKey(Category, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.nombre
+
+# Modelo: Medición
+class Measurement(BaseModel):
+    dispositivo = models.ForeignKey(Device, on_delete=models.CASCADE)
+    consumo_w = models.FloatField()
     timestamp = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f"Measurement for {self.device.name} - {self.consumption_w}W"
+        return f"Medición de {self.dispositivo.nombre} - {self.consumo_w}W"
 
-class Alert(BaseModel): #Alerta
-    measurement = models.OneToOneField(Measurement, on_delete=models.CASCADE)
-    message = models.CharField(max_length=255)
+# Modelo: Alerta
+class Alert(BaseModel):
+    medicion = models.OneToOneField(Measurement, on_delete=models.CASCADE)
+    mensaje = models.CharField(max_length=255)
     timestamp = models.DateTimeField(default=timezone.now)
-    reviewed = models.BooleanField(default=False, help_text="Indicates if the alert has been reviewed.")
+    revisada = models.BooleanField(default=False, help_text="Indica si la alerta ha sido revisada.")
 
     def __str__(self):
-        return f"Alert for {self.measurement.device.name}"
+        return f"Alerta para {self.medicion.dispositivo.nombre}"
 
-class Organization(BaseModel): #Organizacion
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True, null=True)
-    zone = models.ForeignKey(Zone, on_delete=models.CASCADE)
+# Modelo: Organización
+class Organization(BaseModel):
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True, null=True)
+    zona = models.ForeignKey(Zone, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.name
+        return self.nombre
