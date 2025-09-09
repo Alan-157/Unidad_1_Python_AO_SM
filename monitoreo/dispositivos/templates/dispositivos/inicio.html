@@ -6,9 +6,13 @@
     <title>Bienvenido</title>
 </head>
 <body>
-    <h1>Hola {{contexto.nombre}} </h1>
-    {% for p in productos %}
-        <p>Producto: {{p.nombre}} - Valor: {{p.valor}} </p>
-    {% endfor %}
+    <ul>
+        {% for d in dispositivos %}
+            <li>{{ d.nombre}} - {{d.categoria}} {{d.categoria.estado}}</li>
+                ir a <a href="{ % url 'dispositivo' d.id %}"></a>
+            {% empty %}
+            <li>No hay dispositivos.</li>
+        {% endfor %}
+    </ul>
 </body>
 </html>
