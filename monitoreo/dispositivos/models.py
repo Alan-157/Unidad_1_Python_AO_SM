@@ -1,21 +1,21 @@
 from django.db import models
 from django.utils import timezone
 
-class Category(models.Model):
+class Category(models.Model): #categoria
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
 
-class Zone(models.Model):
+class Zone(models.Model): #zona
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True, help_text="Zone description.")
 
     def __str__(self):
         return self.name
 
-class Device(models.Model):
+class Device(models.Model): #Dispositivo
     name = models.CharField(max_length=100)
     power_consumption = models.IntegerField()
     is_active = models.BooleanField(default=True)
@@ -24,7 +24,7 @@ class Device(models.Model):
     def __str__(self):
         return self.name
 
-class Measurement(models.Model):
+class Measurement(models.Model): #Medicion
     device = models.ForeignKey(Device, on_delete=models.CASCADE)
     consumption_w = models.FloatField()
     timestamp = models.DateTimeField(default=timezone.now)
@@ -32,7 +32,7 @@ class Measurement(models.Model):
     def __str__(self):
         return f"Measurement for {self.device.name} - {self.consumption_w}W"
 
-class Alert(models.Model):
+class Alert(models.Model): #Alerta
     measurement = models.OneToOneField(Measurement, on_delete=models.CASCADE)
     message = models.CharField(max_length=255)
     timestamp = models.DateTimeField(default=timezone.now)
@@ -41,7 +41,7 @@ class Alert(models.Model):
     def __str__(self):
         return f"Alert for {self.measurement.device.name}"
 
-class Organization(models.Model):
+class Organization(models.Model): #Organizacion
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     zone = models.ForeignKey(Zone, on_delete=models.CASCADE)
