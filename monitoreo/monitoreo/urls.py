@@ -16,17 +16,26 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.contrib.auth import views as auth_views
 
-from dispositivos.views import inicio, panel_dispositivos,dispositivo,crear_dispositivo,listar_dispositivos,editar_dispositivo,eliminar_dispositivo
+from dispositivos.views import dashboard,inicio,register,device_list,device_detail,measurement_list,alert_summary
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', inicio, name="inicio"), 
-    path('panel/',panel_dispositivos,name='panel'),
-    path('dispostivos/',inicio, name="dispositivos"),
-    path('dispositivos/<int:dispositivo_id>/', dispositivo, name="dispositivo"),
-    path('dispositivos/crear/',crear_dispositivo, name="crear_dispositivo"),
-    path('dispositivos/',listar_dispositivos, name='listar_dispositivos'),
-    path('dispositivos/eliminar/<int:dispositivo_id>/',eliminar_dispositivo, name="eliminar_dispositivo"),
-    path('dispositivos/editar/<int:dispositivo_id>/', editar_dispositivo, name="editar_dispositivo") 
+    path('login/', auth_views.LoginView.as_view(template_name='dispositivos/login.html'), name='login'),
+    path('register/', register, name='register'),
+    path('logout/', auth_views.LogoutView.as_view(template_name='logout.html'), name='logout'),
+    path('password-reset/', auth_views.PasswordResetView.as_view(
+        template_name='dispositivos/password_reset.html'
+    ), name='password_reset'),
+    path('password-reset/done/', auth_views.PasswordResetDoneView.as_view(
+        template_name='dispositivos/password_reset_done.html'
+    ), name='password_reset_done'),
+    path('', inicio, name='inicio'),  # vista pública
+    path('panel/', dashboard, name='dashboard'),  # dashboard protegido
+    path('devices/', device_list, name='device_list'),
+    path('devices/<int:device_id>/', device_detail, name='device_detail'),
+    path('measurements/', measurement_list, name='measurement_list'),
+    path('alerts/summary/', alert_summary, name='alert_summary'),
 ]
+

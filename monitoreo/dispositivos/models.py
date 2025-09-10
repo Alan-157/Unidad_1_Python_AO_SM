@@ -1,71 +1,84 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import AbstractUser
 
-# Modelo base con atributos comunes para heredar en otras tablas
+# Base model with common attributes
 class BaseModel(models.Model):
-    ESTADOS = [
+    STATUS_CHOICES = [
         ("ACTIVO", "Activo"),
         ("INACTIVO", "Inactivo"),
     ]
 
-    estado = models.CharField(max_length=10, choices=ESTADOS, default="ACTIVO")  # Estado funcional del objeto
-    creado = models.DateTimeField(auto_now_add=True)  # Fecha de creación
-    actualizado = models.DateTimeField(auto_now=True)  # Fecha de última modificación
-    eliminado = models.DateTimeField(null=True, blank=True)  # Fecha de eliminación lógica (opcional)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="ACTIVO")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        abstract = True  # Este modelo no crea tabla, solo se hereda
+        abstract = True
 
-# Modelo: Categoría
-class Category(BaseModel):
-    nombre = models.CharField(max_length=100)
-    descripcion = models.TextField(blank=True, null=True)
-
-    def __str__(self):
-        return self.nombre
-
-# Modelo: Zona
+# Modelo Zona (debe ir antes si Organization depende de ella)
 class Zone(BaseModel):
-    nombre = models.CharField(max_length=100, unique=True)
-    descripcion = models.TextField(blank=True, null=True, help_text="Descripción de la zona.")
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True, help_text="Zone description.")
+    organization = models.ForeignKey('Organization', on_delete=models.CASCADE,null=True ,related_name='zones')
 
     def __str__(self):
-        return self.nombre
+        return self.name
 
-# Modelo: Dispositivo
-class Device(BaseModel):
-    nombre = models.CharField(max_length=100)
-    consumo_maximo = models.IntegerField()  # Consumo en watts
-    zona = models.ForeignKey(Zone, on_delete=models.CASCADE)
-    categoria = models.ForeignKey(Category, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.nombre
-
-# Modelo: Medición
-class Measurement(BaseModel):
-    dispositivo = models.ForeignKey(Device, on_delete=models.CASCADE)
-    consumo_w = models.FloatField()
-    timestamp = models.DateTimeField(default=timezone.now)
-
-    def __str__(self):
-        return f"Medición de {self.dispositivo.nombre} - {self.consumo_w}W"
-
-# Modelo: Alerta
-class Alert(BaseModel):
-    medicion = models.OneToOneField(Measurement, on_delete=models.CASCADE)
-    mensaje = models.CharField(max_length=255)
-    timestamp = models.DateTimeField(default=timezone.now)
-    revisada = models.BooleanField(default=False, help_text="Indica si la alerta ha sido revisada.")
-
-    def __str__(self):
-        return f"Alerta para {self.medicion.dispositivo.nombre}"
-
-# Modelo: Organización
+# Modelo Organización
 class Organization(BaseModel):
-    nombre = models.CharField(max_length=100)
-    descripcion = models.TextField(blank=True, null=True)
-    zona = models.ForeignKey(Zone, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+    zone = models.ForeignKey(Zone, on_delete=models.CASCADE, related_name='organizations')
 
     def __str__(self):
-        return self.nombre
+        return self.name
+
+# Modelo de usuario personalizado
+class CustomUser(AbstractUser):
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.username} ({self.organization.name})" if self.organization else self.username
+
+# Modelo Categoría
+class Category(BaseModel):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+# Modelo Dispositivo
+class Device(BaseModel):
+    name = models.CharField(max_length=100)
+    max_consumption = models.IntegerField(help_text="Maximum consumption in watts")
+    zone = models.ForeignKey(Zone, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+# Modelo Medición
+class Measurement(BaseModel):
+    device = models.ForeignKey(Device, on_delete=models.CASCADE)
+    consumption_w = models.FloatField()
+    timestamp = models.DateTimeField(default=timezone.now)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Measurement of {self.device.name} - {self.consumption_w}W"
+
+# Modelo Alerta
+class Alert(BaseModel):
+    measurement = models.OneToOneField(Measurement, on_delete=models.CASCADE)
+    message = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(default=timezone.now)
+    reviewed = models.BooleanField(default=False, help_text="Indicates if the alert has been reviewed.")
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Alert for {self.measurement.device.name}"
