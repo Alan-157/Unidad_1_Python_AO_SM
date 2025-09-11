@@ -1,80 +1,56 @@
-{% extends "dispositivos/base.html" %}
+    {% extends "dispositivos/base.html" %}
+    {% block title %}Detalle del Dispositivo{% endblock %}
 
-{% block content %}
-<div class="container mt-4">
-    <h2 class="mb-3">Detalle del Dispositivo</h2>
+    {% block content %}
+    <div class="container mt-4">
+    <h2 class="mb-4">Ficha del Dispositivo</h2>
 
     <!-- Datos del dispositivo -->
     <div class="card mb-4">
-        <div class="card-header bg-secondary text-white">Información del dispositivo</div>
         <div class="card-body">
-            <p><strong>Nombre:</strong> {{ device.name }}</p>
-            <p><strong>Categoría:</strong> {{ device.category.name }}</p>
-            <p><strong>Zona:</strong> {{ device.zone.name }}</p>
-            <p><strong>Consumo máximo:</strong> {{ device.max_consumption }} W</p>
-            <p><strong>Estado:</strong>
-                {% if device.status == "ACTIVE" %}
-                    <span class="badge bg-success">Activo</span>
-                {% else %}
-                    <span class="badge bg-secondary">Inactivo</span>
-                {% endif %}
-            </p>
-        </div>
+        <h4 class="card-title">{{ device.name }}</h4>
+        <p><strong>Categoría:</strong> {{ device.category.name }}</p>
+        <p><strong>Zona:</strong> {{ device.zone.name }}</p>
+    </div>
     </div>
 
     <!-- Mediciones -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">Mediciones registradas</div>
-        <div class="card-body">
-            {% if measurements %}
-                <table class="table table-sm table-striped">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Consumo (W)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for m in measurements %}
-                        <tr>
-                            <td>{{ m.timestamp|date:"d/m/Y H:i" }}</td>
-                            <td>{{ m.consumption_w }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p class="text-muted">No hay mediciones disponibles.</p>
-            {% endif %}
-        </div>
-    </div>
+    <h5 class="mb-3">Mediciones recientes</h5>
+    {% if measurements %}
+        <table class="table table-striped">
+        <thead>
+            <tr>
+            <th>Fecha</th>
+            <th>Consumo (W)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in measurements %}
+            <tr>
+            <td>{{ m.timestamp|date:"Y-m-d H:i" }}</td>
+            <td>{{ m.consumption_w }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">Este dispositivo aún no tiene mediciones registradas.</p>
+    {% endif %}
 
     <!-- Alertas -->
-    <div class="card mb-4">
-        <div class="card-header bg-danger text-white">Alertas generadas</div>
-        <div class="card-body">
-            {% if alerts %}
-                <ul class="list-group">
-                    {% for a in alerts %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ a.message }}
-                        <span class="badge {% if a.reviewed %}bg-success{% else %}bg-warning{% endif %}">
-                            {% if a.reviewed %}Revisada{% else %}Pendiente{% endif %}
-                        </span>
-                    </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-muted">No se han generado alertas para este dispositivo.</p>
-            {% endif %}
+    <h5 class="mt-4 mb-3">Alertas asociadas</h5>
+    {% if alerts %}
+    <div class="list-group">
+        {% for alert in alerts %}
+        <div class="list-group-item">
+        <strong>{{ alert.status }}</strong> — {{ alert.message }}
+        <span class="badge bg-{{ alert.status|lower }}">{{ alert.reviewed|yesno:"Revisada,Pendiente" }}</span>
+        <div class="text-muted small">{{ alert.timestamp|date:"Y-m-d H:i" }}</div>
         </div>
+    {% endfor %}
     </div>
-
-    <!-- Acciones -->
-    <div class="text-end">
-        <a href="{% url 'device_edit' device.id %}" class="btn btn-warning">Editar</a>
-        <a href="{% url 'device_delete' device.id %}" class="btn btn-danger">Eliminar</a>
-        <a href="{% url 'device_list' %}" class="btn btn-secondary">Volver al listado</a>
+    {% else %}
+    <p class="text-muted">No se han generado alertas para este dispositivo.</p>
+    {% endif %}
     </div>
-</div>
-{% endblock %}
+    {% endblock %}
