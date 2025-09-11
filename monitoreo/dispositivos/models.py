@@ -17,20 +17,19 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
-# Modelo Zona (debe ir antes si Organization depende de ella)
-class Zone(BaseModel):
+# Modelo Organización (ya no depende de Zona)
+class Organization(BaseModel):
     name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(blank=True, null=True, help_text="Zone description.")
-    organization = models.ForeignKey('Organization', on_delete=models.CASCADE,null=True ,related_name='zones')
+    description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
 
-# Modelo Organización
-class Organization(BaseModel):
+# Modelo Zona (debe ir antes si Organization depende de ella)
+class Zone(BaseModel):
     name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(blank=True, null=True)
-    zone = models.ForeignKey(Zone, on_delete=models.CASCADE, related_name='organizations')
+    description = models.TextField(blank=True, null=True, help_text="Zone description.")
+    organization = models.ForeignKey('Organization', on_delete=models.CASCADE, related_name='zones')
 
     def __str__(self):
         return self.name
