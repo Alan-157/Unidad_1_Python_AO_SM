@@ -1,9 +1,9 @@
-from django.shortcuts import render,redirect,get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import Device, Measurement, Alert, Category, Zone
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.forms import UserCreationForm
-from .forms import CustomRegisterForm
+from .forms import CustomRegisterForm, DispositivoForm
 from django.contrib.auth import login
 from django.core.paginator import Paginator
 from django.db.models import Count
@@ -20,59 +20,51 @@ def register(request):
         form = CustomRegisterForm()
     return render(request, 'dispositivos/register.html', {'form': form})
 
-
-
 @login_required
 def dashboard(request):
     org = request.user.organization
 
-    # Últimas mediciones
-    latest_measurements = Measurement.objects.filter(organization=org).order_by('-timestamp')[:10]
+    # Últimas mediciones (renombrada para que coincida con la plantilla)
+    recent_measurements = Measurement.objects.filter(organization=org).order_by('-timestamp')[:10]
 
-    # Conteo por categoría y zona
-    devices_by_category = (
+    # Conteo por categoría (renombrada)
+    category_counts = (
         Device.objects.filter(organization=org)
         .values('category__name')
         .annotate(count=Count('id'))
     )
-    devices_by_zone = (
+
+    # Conteo por zona (renombrada)
+    zone_counts = (
         Device.objects.filter(organization=org)
         .values('zone__name')
         .annotate(count=Count('id'))
     )
 
-    # Filtros de alertas
-    severity = request.GET.get('severity')
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-
+    # Alertas recientes
     alerts = Alert.objects.filter(organization=org)
-
-    if severity:
-        alerts = alerts.filter(status=severity)
-    if start_date:
-        alerts = alerts.filter(timestamp__gte=start_date)
-    if end_date:
-        alerts = alerts.filter(timestamp__lte=end_date)
-
-    reviewed_count = alerts.filter(reviewed=True).count()
-    pending_count = alerts.filter(reviewed=False).count()
-    severity_counts = alerts.values('status').annotate(count=Count('id'))
     recent_alerts = alerts.order_by('-timestamp')[:10]
+    
+    # Conteo de alertas para la semana
+    one_week_ago = timezone.now() - timedelta(days=7)
+    weekly_alerts = alerts.filter(timestamp__gte=one_week_ago).values('status').annotate(count=Count('id'))
+
+    # Lista de todos los dispositivos
+    devices = Device.objects.filter(organization=org)
+    
+    # Lista de todas las categorías y zonas para los filtros
+    categories = Category.objects.filter(organization=org)
+    zones = Zone.objects.filter(organization=org)
 
     context = {
-        'latest_measurements': latest_measurements,
-        'devices_by_category': devices_by_category,
-        'devices_by_zone': devices_by_zone,
-        'reviewed_count': reviewed_count,
-        'pending_count': pending_count,
-        'severity_counts': severity_counts,
+        'recent_measurements': recent_measurements,
+        'category_counts': category_counts,
+        'zone_counts': zone_counts,
+        'weekly_alerts': weekly_alerts,
         'recent_alerts': recent_alerts,
-        'filters': {
-            'severity': severity,
-            'start_date': start_date,
-            'end_date': end_date
-        }
+        'devices': devices,
+        'categories': categories,
+        'zones': zones,
     }
     return render(request, 'dispositivos/dashboard.html', context)
 
@@ -173,3 +165,50 @@ def alert_summary(request):
         'severity_counts': severity_counts,
         'recent_alerts': recent_alerts
     })
+
+@login_required
+def device_add(request):
+    org = request.user.organization
+    if request.method == 'POST':
+        form = DispositivoForm(request.POST)
+        if form.is_valid():
+            new_device = form.save(commit=False)
+            new_device.organization = org
+            new_device.save()
+            return redirect('device_list')
+    else:
+        form = DispositivoForm(initial={'organization': org.id})
+    
+    # Aquí filtramos las opciones del formulario
+    form.fields['category'].queryset = Category.objects.filter(organization=org)
+    form.fields['zone'].queryset = Zone.objects.filter(organization=org)
+    form.fields['organization'].initial = org
+
+    return render(request, 'dispositivos/device_form.html', {'form': form})
+
+@login_required
+def device_edit(request, device_id):
+    org = request.user.organization
+    device = get_object_or_404(Device, id=device_id, organization=org)
+    if request.method == 'POST':
+        form = DispositivoForm(request.POST, instance=device)
+        if form.is_valid():
+            form.save()
+            return redirect('device_list')
+    else:
+        form = DispositivoForm(instance=device)
+    
+    # Aquí filtramos las opciones del formulario
+    form.fields['category'].queryset = Category.objects.filter(organization=org)
+    form.fields['zone'].queryset = Zone.objects.filter(organization=org)
+    
+    return render(request, 'dispositivos/device_form.html', {'form': form})
+
+@login_required
+def device_delete(request, device_id):
+    org = request.user.organization
+    device = get_object_or_404(Device, id=device_id, organization=org)
+    if request.method == 'POST':
+        device.delete()
+        return redirect('device_list')
+    return render(request, 'dispositivos/device_confirm_delete.html', {'device': device})

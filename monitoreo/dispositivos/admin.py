@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Zone, Device, Measurement, Alert, Organization
+from .models import Category, Zone, Device, Measurement, Alert, Organization, CustomUser
 
 #Registro del modelo Categoria
 @admin.register(Category)
@@ -39,6 +39,13 @@ class AlertAdmin(admin.ModelAdmin):
 #REgistro del modelo Organizacion
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'zone', 'description', 'status', 'created_at')
+    list_display = ('name', 'description', 'status', 'created_at')
     search_fields = ('name',)
-    list_filter = ('zone', 'status')
+    list_filter = ('status',)
+
+# Registro del modelo CustomUser
+@admin.register(CustomUser)
+class CustomUserAdmin(admin.ModelAdmin):
+    list_display = ('username', 'email', 'organization', 'is_staff')
+    search_fields = ('username', 'email')
+    list_filter = ('is_staff', 'is_superuser', 'organization')

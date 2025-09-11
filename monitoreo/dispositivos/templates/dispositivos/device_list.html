@@ -4,7 +4,6 @@
 <div class="container mt-4">
     <h2 class="mb-4">Listado de Dispositivos</h2>
 
-    <!-- Filtro por categoría -->
     <form method="get" class="mb-3">
         <div class="row">
             <div class="col-md-6">
@@ -23,7 +22,6 @@
         </div>
     </form>
 
-    <!-- Tabla de dispositivos -->
     {% if devices %}
         <table class="table table-bordered table-hover">
             <thead class="table-light">
@@ -33,7 +31,6 @@
                     <th>Zona</th>
                     <th>Consumo Máximo (W)</th>
                     <th>Estado</th>
-                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -50,10 +47,6 @@
                             <span class="badge bg-secondary">Inactivo</span>
                         {% endif %}
                     </td>
-                    <td>
-                        <a href="{% url 'device_detail' device.id %}" class="btn btn-sm btn-outline-info">Ver</a>
-                        <a href="{% url 'device_edit' device.id %}" class="btn btn-sm btn-outline-warning">Editar</a>
-                        <a href="{% url 'device_delete' device.id %}" class="btn btn-sm btn-outline-danger">Eliminar</a>
                     </td>
                 </tr>
                 {% endfor %}
