@@ -24,35 +24,56 @@ def register(request):
 def dashboard(request):
     org = request.user.organization
 
-    # Últimas mediciones (renombrada para que coincida con la plantilla)
-    recent_measurements = Measurement.objects.filter(organization=org).order_by('-timestamp')[:10]
+    # Filtros GET
+    category_id = request.GET.get('category')
+    zone_id = request.GET.get('zone')
+    from_date = request.GET.get('from')
+    to_date = request.GET.get('to')
 
-    # Conteo por categoría (renombrada)
-    category_counts = (
-        Device.objects.filter(organization=org)
-        .values('category__name')
-        .annotate(count=Count('id'))
+    # Base queryset de dispositivos
+    devices = Device.objects.filter(organization=org)
+
+    # Validar que la categoría pertenece a la organización
+    if category_id and category_id.isdigit():
+        if Category.objects.filter(id=category_id, organization=org).exists():
+            devices = devices.filter(category_id=int(category_id))
+
+    # Validar que la zona pertenece a la organización
+    if zone_id and zone_id.isdigit():
+        if Zone.objects.filter(id=zone_id, organization=org).exists():
+            devices = devices.filter(zone_id=int(zone_id))
+
+    # Mediciones filtradas por dispositivos y fechas
+    measurements = Measurement.objects.filter(
+        organization=org,
+        device__in=devices
     )
+    if from_date:
+        measurements = measurements.filter(timestamp__gte=from_date)
+    if to_date:
+        measurements = measurements.filter(timestamp__lte=to_date)
+    recent_measurements = measurements.order_by('-timestamp')[:10]
 
-    # Conteo por zona (renombrada)
-    zone_counts = (
-        Device.objects.filter(organization=org)
-        .values('zone__name')
-        .annotate(count=Count('id'))
+    # Alertas filtradas por dispositivos y fechas
+    alerts = Alert.objects.filter(
+        organization=org,
+        measurement__device__in=devices
     )
-
-    # Alertas recientes
-    alerts = Alert.objects.filter(organization=org)
+    if from_date:
+        alerts = alerts.filter(timestamp__gte=from_date)
+    if to_date:
+        alerts = alerts.filter(timestamp__lte=to_date)
     recent_alerts = alerts.order_by('-timestamp')[:10]
-    
-    # Conteo de alertas para la semana
+
+    # Alertas de la semana
     one_week_ago = timezone.now() - timedelta(days=7)
     weekly_alerts = alerts.filter(timestamp__gte=one_week_ago).values('status').annotate(count=Count('id'))
 
-    # Lista de todos los dispositivos
-    devices = Device.objects.filter(organization=org)
-    
-    # Lista de todas las categorías y zonas para los filtros
+    # Conteo por categoría y zona
+    category_counts = devices.values('category__name').annotate(count=Count('id'))
+    zone_counts = devices.values('zone__name').annotate(count=Count('id'))
+
+    # Listado de categorías y zonas para los filtros
     categories = Category.objects.filter(organization=org)
     zones = Zone.objects.filter(organization=org)
 
@@ -68,6 +89,9 @@ def dashboard(request):
     }
     return render(request, 'dispositivos/dashboard.html', context)
 
+
+
+
 def inicio(request):
     return render(request, 'dispositivos/inicio.html')
 
@@ -78,13 +102,17 @@ def device_list(request):
     categories = Category.objects.filter(organization=org)
 
     devices = Device.objects.filter(organization=org)
-    if category_id:
-        devices = devices.filter(category_id=category_id)
+
+    # Validar que la categoría pertenece a la organización
+    if category_id and category_id.isdigit():
+        if Category.objects.filter(id=category_id, organization=org).exists():
+            devices = devices.filter(category_id=int(category_id))
 
     return render(request, 'dispositivos/device_list.html', {
         'devices': devices,
         'categories': categories
     })
+
 
 @login_required    
 def device_detail(request, device_id):
