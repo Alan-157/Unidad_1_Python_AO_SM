@@ -31,6 +31,12 @@ urlpatterns = [
     path('password-reset/done/', auth_views.PasswordResetDoneView.as_view(
         template_name='dispositivos/password_reset_done.html'
     ), name='password_reset_done'),
+    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
+        template_name='dispositivos/password_reset_confirm.html'
+        ), name='password_reset_confirm'),
+    path('reset/done/', auth_views.PasswordResetCompleteView.as_view(
+        template_name='dispositivos/password_reset_complete.html'
+        ), name='password_reset_complete'),
     path('', inicio, name='inicio'),  # vista pública
     path('panel/', dashboard, name='dashboard'),  # dashboard protegido
     path('devices/', device_list, name='device_list'),
